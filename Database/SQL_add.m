@@ -1,4 +1,4 @@
-function structArray = SQL_add(addWhat, inputFile, forDatabase, beVocal)
+function structArray = SQL_add(addWhat,inputFile,forDatabase,beVocal)
 % SQL_add   Interpret a structured input file of time series, operations,
 %           or master operations.
 %
@@ -16,13 +16,19 @@ function structArray = SQL_add(addWhat, inputFile, forDatabase, beVocal)
 % beVocal: if 1 (default) gives user feedback on the input process.
 
 % ------------------------------------------------------------------------------
-% Copyright (C) 2016, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
+% Copyright (C) 2017, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
 % <http://www.benfulcher.com>
 %
-% If you use this code for your research, please cite:
-% B. D. Fulcher, M. A. Little, N. S. Jones, "Highly comparative time-series
+% If you use this code for your research, please cite the following two papers:
+%
+% (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% DOI: 10.1016/j.cels.2017.10.001
+%
+% (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
 % analysis: the empirical structure of time series and their methods",
-% J. Roy. Soc. Interface 10(83) 20130048 (2013). DOI: 10.1098/rsif.2013.0048
+% J. Roy. Soc. Interface 10(83) 20130048 (2013).
+% DOI: 10.1098/rsif.2013.0048
 %
 % This work is licensed under the Creative Commons
 % Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of
@@ -57,13 +63,13 @@ end
 % forDatabase
 if nargin < 3 || isempty(forDatabase)
     % Write the results directly to the mySQL database specified in sql_settings.conf
-    forDatabase = 1;
+    forDatabase = true;
 end
 
 % beVocal
 if nargin < 4
     % Give user feedback by default:
-    beVocal = 1;
+    beVocal = true;
 end
 
 % ------------------------------------------------------------------------------
@@ -464,7 +470,7 @@ case 'ts' % Prepare toAdd cell for time series
                     TimeSeries(j).Name,TimeSeries(j).Length,TimeSeries(j).Keywords);
             title(titleText,'interpreter','none');
             fprintf(1,'\n%s --- loaded successfully.',titleText);
-            pause(0.01); % wait 0.01 second to show the plotted time series
+            pause(0.005); % Wait 5ms to show the plotted time series!
         end
     end
 
@@ -832,36 +838,12 @@ if ismember(addWhat,{'mops','ops'}) % there may be new links
         error('\nOops! Error finding links between Operations and MasterOperations:\n%s\n',emsg);
     end
 
-    %     % if strcmp(addWhat,'ops')
-    %     %     % operations were imported -- match their MasterLabels with elements of the MasterOperations table using mySQL JOIN
-    %     %     InsertString = ['INSERT INTO MasterPointerRelate SELECT m.mop_id,o.op_id FROM MasterOperations m JOIN ' ...
-    %     %                         'Operations o ON m.MasterLabel = o.MasterLabel WHERE o.op_id > %u',maxId];
-    %     % else
-    %     %     InsertString = ['INSERT INTO MasterPointerRelate SELECT m.mop_id,o.op_id FROM MasterOperations m JOIN ' ...
-    %     %                         'Operations o ON m.MasterLabel = o.MasterLabel WHERE m.mop_id > %u',maxId];
-    %     % end
-    %
-
     updateString = sprintf(['UPDATE MasterOperations AS m SET NPointTo = ' ...
                     '(SELECT COUNT(o.mop_id) FROM Operations AS o WHERE m.mop_id = o.mop_id)']);
     [~,emsg] = mysql_dbexecute(dbc, updateString);
     if ~isempty(emsg)
         error('Error counting NPointTo operations for mop_id = %u\n%s\n',M_ids(k),emsg);
     end
-
-    % M_ids = mysql_dbquery(dbc,'SELECT mop_id FROM MasterOperations');
-    % M_ids = vertcat(M_ids{:}); % vector of master_ids
-    % for k = 1:length(M_ids)
-    %     updateString = sprintf(['UPDATE MasterOperations SET NPointTo = ' ...
-    %                     '(SELECT COUNT(mop_id) FROM Operations WHERE mop_id = %u)' ...
-    %                         'WHERE mop_id = %u'],M_ids(k),M_ids(k));
-    %     [~,emsg] = mysql_dbexecute(dbc, updateString);
-    %     if ~isempty(emsg)
-    %         fprintf(1,'Error counting NPointTo operations for mop_id = %u\n',M_ids(k));
-    %         fprintf(1,'%s\n',emsg)
-    %         keyboard
-    %     end
-    % end
 
 end
 

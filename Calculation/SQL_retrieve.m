@@ -34,13 +34,19 @@ function didWrite = SQL_retrieve(ts_ids,op_ids,retrieveWhatEntries,retrieveWhatD
 %--MasterOperations, contains metadata about the implicatedmaster operations
 
 % ------------------------------------------------------------------------------
-% Copyright (C) 2016, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
+% Copyright (C) 2017, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
 % <http://www.benfulcher.com>
 %
-% If you use this code for your research, please cite:
-% B. D. Fulcher, M. A. Little, N. S. Jones, "Highly comparative time-series
+% If you use this code for your research, please cite the following two papers:
+%
+% (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% DOI: 10.1016/j.cels.2017.10.001
+%
+% (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
 % analysis: the empirical structure of time series and their methods",
-% J. Roy. Soc. Interface 10(83) 20130048 (2013). DOI: 10.1098/rsif.2013.0048
+% J. Roy. Soc. Interface 10(83) 20130048 (2013).
+% DOI: 10.1098/rsif.2013.0048
 %
 % This work is licensed under the Creative Commons
 % Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of
@@ -456,8 +462,46 @@ else
     MasterOperations = cell2struct(masterinfo',{'ID','Label','Code'});
 end
 
+%-------------------------------------------------------------------------------
+% Get the git information
+%-------------------------------------------------------------------------------
+selectString = 'SELECT branch,hash,remote,url FROM GitInfo';
+[gitDatabase,emsg] = mysql_dbquery(dbc,selectString);
+gitInfoDatabase = struct();
+if ~isempty(emsg)
+	fprintf(1,'Error retrieving git repository info from the database\n');
+else
+	gitInfoDatabase.branch = gitDatabase{1};
+	gitInfoDatabase.hash = gitDatabase{2};
+	gitInfoDatabase.remote = gitDatabase{3};
+	gitInfoDatabase.url = gitDatabase{4};
+end
+
+%-------------------------------------------------------------------------------
 % Close database connection
+%-------------------------------------------------------------------------------
 SQL_closedatabase(dbc)
+
+%-------------------------------------------------------------------------------
+% Compare git from database to git of local hctsa
+%-------------------------------------------------------------------------------
+gitInfoLocal = TS_AddGitInfo(); % add details of current git repository
+if isempty(gitInfoLocal)
+	warning('No local git repository information found')
+end
+if ~isempty(gitInfoLocal)
+	% Check hash matches:
+	if strcmp(gitInfoLocal.hash,gitInfoDatabase.hash)
+		fprintf(1,'Yay! Local git repo matches that used when generating the database :)\n');
+	else
+		warning(sprintf(['hctsa version has changed since the database was generated.\n',...
+				'%s -> %s\n',...
+				'Storing database version in local HCTSA file.\n',...
+				'Be very careful for inconsistencies if computing features...'],...
+				gitInfoDatabase.hash,gitInfoLocal.hash))
+	end
+end
+gitInfo = gitInfoDatabase;
 
 % ------------------------------------------------------------------------------
 %% Save to HCTSA.mat
@@ -465,8 +509,8 @@ SQL_closedatabase(dbc)
 outputFileName = 'HCTSA.mat';
 fprintf(1,'Saving local versions of the data to %s...',outputFileName);
 saveTimer = tic;
-fromDatabase = 1; % mark that we retrieved this data from the mySQL database
-save('HCTSA.mat','TimeSeries','Operations','MasterOperations','fromDatabase','-v7.3');
+fromDatabase = true; % mark that we retrieved this data from the mySQL database
+save('HCTSA.mat','TimeSeries','Operations','MasterOperations','fromDatabase','gitInfo','-v7.3');
 switch retrieveWhatData
 case 'all'
     % Add outputs, quality labels, and calculation times

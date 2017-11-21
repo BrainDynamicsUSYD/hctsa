@@ -12,13 +12,19 @@ function TS_ReIndex(whatData,tsOrOps,overRide)
 % >> TS_ReIndex('norm','ts');
 
 % ------------------------------------------------------------------------------
-% Copyright (C) 2016, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
+% Copyright (C) 2017, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
 % <http://www.benfulcher.com>
 %
-% If you use this code for your research, please cite:
-% B. D. Fulcher, M. A. Little, N. S. Jones, "Highly comparative time-series
+% If you use this code for your research, please cite the following two papers:
+%
+% (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% DOI: 10.1016/j.cels.2017.10.001
+%
+% (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
 % analysis: the empirical structure of time series and their methods",
-% J. Roy. Soc. Interface 10(83) 20130048 (2013). DOI: 10.1098/rsif.2013.0048
+% J. Roy. Soc. Interface 10(83) 20130048 (2013).
+% DOI: 10.1098/rsif.2013.0048
 %
 % This work is licensed under the Creative Commons
 % Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of
@@ -46,18 +52,17 @@ if ~ismember(tsOrOps,{'ts','ops','both'})
 end
 
 if nargin < 3
-    overRide = 0; % check with the user that they really want to do this
+    overRide = false; % check with the user that they really want to do this
 end
 
-% ------------------------------------------------------------------------------
+%-------------------------------------------------------------------------------
 %% Load data from file
-% ------------------------------------------------------------------------------
-
+%-------------------------------------------------------------------------------
 [~,TimeSeries,Operations,dataFile] = TS_LoadData(whatData);
 numTimeSeries = length(TimeSeries);
 numOperations = length(Operations);
 
-load(dataFile,'fromDatabase')
+fromDatabase = TS_GetFromData(dataFile,'fromDatabase');
 if fromDatabase
     error(['Shouldn''t be re-indexing data from a mySQL database, as it will' ...
                     ' no longer be matched to the database index']);
@@ -80,7 +85,7 @@ if strcmp(tsOrOps,'ts') || strcmp(tsOrOps,'both')
     for i = 1:numTimeSeries
         TimeSeries(i).ID = i;
     end
-    
+
     % Save back:
     save(dataFile,'TimeSeries','-append')
     fprintf(1,'Time series re-indexed and saved back to %s.\n',dataFile);

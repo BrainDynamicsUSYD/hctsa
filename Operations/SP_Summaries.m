@@ -11,6 +11,7 @@ function out = SP_Summaries(y,psdMeth,windowType,nf,dologabs)
 % psdMeth, the method of obtaining the spectrum from the signal:
 %               (i) 'periodogram': periodogram
 %               (ii) 'fft': fast fourier transform
+%               (iii) 'welch': Welch's method
 %
 % windowType, the window to use:
 %               (i) 'boxcar'
@@ -37,13 +38,19 @@ function out = SP_Summaries(y,psdMeth,windowType,nf,dologabs)
 % crossings of the spectrum at various amplitude thresholds.
 
 % ------------------------------------------------------------------------------
-% Copyright (C) 2016, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
+% Copyright (C) 2017, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
 % <http://www.benfulcher.com>
 %
-% If you use this code for your research, please cite:
-% B. D. Fulcher, M. A. Little, N. S. Jones, "Highly comparative time-series
+% If you use this code for your research, please cite the following two papers:
+%
+% (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% DOI: 10.1016/j.cels.2017.10.001
+%
+% (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
 % analysis: the empirical structure of time series and their methods",
-% J. Roy. Soc. Interface 10(83) 20130048 (2013). DOI: 10.1098/rsif.2013.0048
+% J. Roy. Soc. Interface 10(83) 20130048 (2013).
+% DOI: 10.1098/rsif.2013.0048
 %
 % This function is free software: you can redistribute it and/or modify it under
 % the terms of the GNU General Public License as published by the Free Software
@@ -67,7 +74,7 @@ BF_CheckToolbox('curve_fitting_toolbox')
 % ------------------------------------------------------------------------------
 % Check inputs, set defaults:
 % ------------------------------------------------------------------------------
-if size(y,2) > size(y,1);
+if size(y,2) > size(y,1)
     y = y'; % Time series must be a column vector
 end
 if nargin < 2 || isempty(psdMeth)
@@ -80,7 +87,7 @@ if nargin < 4
     nf = [];
 end
 if nargin < 5 || isempty(dologabs)
-    dologabs = 0;
+    dologabs = false;
 end
 
 if dologabs % a boolean
@@ -88,7 +95,7 @@ if dologabs % a boolean
     y = log(abs(y));
 end
 
-doPlot = 0; % plot outputs
+doPlot = false; % plot outputs
 Ny = length(y); % time-series length
 
 %-------------------------------------------------------------------------------
@@ -151,7 +158,7 @@ end
 
 if ~any(isfinite(S)) % no finite values in the power spectrum
     % This time series must be really weird -- return NaN (unsuitable operation)...
-    fprintf(1,'NaN in power spectrum? A weird time series.\n');
+    warning('NaN in power spectrum? A weird time series.');
     out = NaN; return
 end
 
@@ -186,7 +193,7 @@ dw = w(2) - w(1); % spacing increment in w
 out.maxw = w(i_maxS);
 out.maxWidth = w(i_maxS + find(S(i_maxS+1:end) < out.maxS,1,'first')) - ...
                     w(find(S(1:i_maxS-1) < out.maxS,1,'last'));
-if isempty(out.maxWidth);
+if isempty(out.maxWidth)
     out.maxWidth = 0;
 end
 

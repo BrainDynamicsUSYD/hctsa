@@ -11,13 +11,19 @@ function TS_FeatureSummary(opID, whatData, doViolin, annotateParams)
 % annotateParams, a structure of custom plotting options
 
 % ------------------------------------------------------------------------------
-% Copyright (C) 2016, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
+% Copyright (C) 2017, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
 % <http://www.benfulcher.com>
 %
-% If you use this code for your research, please cite:
-% B. D. Fulcher, M. A. Little, N. S. Jones, "Highly comparative time-series
+% If you use this code for your research, please cite the following two papers:
+%
+% (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% DOI: 10.1016/j.cels.2017.10.001
+%
+% (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
 % analysis: the empirical structure of time series and their methods",
-% J. Roy. Soc. Interface 10(83) 20130048 (2013). DOI: 10.1098/rsif.2013.0048
+% J. Roy. Soc. Interface 10(83) 20130048 (2013).
+% DOI: 10.1098/rsif.2013.0048
 %
 % This work is licensed under the Creative Commons
 % Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of
@@ -38,7 +44,7 @@ if nargin < 2 || isempty(whatData)
 end
 
 if nargin < 3 || isempty(doViolin) % annotation parameters
-    doViolin = 0;
+    doViolin = false;
 end
 
 if nargin < 4 || isempty(annotateParams) % annotation parameters
@@ -109,7 +115,6 @@ end
 
 if doViolin
     % Violin plots
-
     rainbowColors = [BF_getcmap('set1',5,1); BF_getcmap('dark2',5,1)];
 
     if isfield(TimeSeries,'Group')
@@ -212,10 +217,12 @@ else % kernel distributions
             [fr,xr,lineHandles{k+1}] = BF_plot_ks(dataVector(timeSeriesGroup==k),...
                                 annotateParams.groupColors{k},0,2,12);
             fx{k} = [xr',fr'];
-            tsInd{k} = find(timeSeriesGroup==k)';
+            tsInd{k} = find(timeSeriesGroup==k);
         end
         xy = vertcat(fx{:});
+        % Now make sure that elements of TimeSeries matches ordering of xy
         tsInd = vertcat(tsInd{:});
+        ix = arrayfun(@(x)find(x==tsInd),1:length(TimeSeries));
         TimeSeries = TimeSeries(tsInd);
 
         % Set up legend:
@@ -225,7 +232,7 @@ else % kernel distributions
         legend(horzcat(lineHandles{:}),legendText)
 
     else
-        % Just run a single global one
+        % Just run a single global one (black)
         [fr,xr] = BF_plot_ks(dataVector,'k',0,1.5,10);
         xy = [xr',fr'];
     end

@@ -11,9 +11,9 @@ function [featureVector,calcTimes,calcQuality] = TS_CalculateFeatureVector(tsStr
 % 				this makes sure the featureVector is all real numbers, and any
 %				special values (like NaNs, Infs, etc.) are coded with corresponding
 % 				labels in calcQuality.
-% 				codeSpecial = 0: special values are kept in the feature vector,
-% 								and any errors are coded as NaN.
-% 				codeSpecial = 1: featureVector is all real numbers, and is set to
+% 				codeSpecial = false [default]: special values are kept in the
+% 							feature vector, and any errors are coded as NaN.
+% 				codeSpecial = true: featureVector is all real numbers, and is set to
 % 							     zero where any special-valued outputs occur.
 % beVocal, whether to give user feedback on the computation.
 %
@@ -30,13 +30,19 @@ function [featureVector,calcTimes,calcQuality] = TS_CalculateFeatureVector(tsStr
 % >> features = TS_CalculateFeatureVector(randn(500,1));
 
 % ------------------------------------------------------------------------------
-% Copyright (C) 2016, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
+% Copyright (C) 2017, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
 % <http://www.benfulcher.com>
 %
-% If you use this code for your research, please cite:
-% B. D. Fulcher, M. A. Little, N. S. Jones, "Highly comparative time-series
+% If you use this code for your research, please cite the following two papers:
+%
+% (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% DOI: 10.1016/j.cels.2017.10.001
+%
+% (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
 % analysis: the empirical structure of time series and their methods",
-% J. Roy. Soc. Interface 10(83) 20130048 (2013). DOI: 10.1098/rsif.2013.0048
+% J. Roy. Soc. Interface 10(83) 20130048 (2013).
+% DOI: 10.1098/rsif.2013.0048
 %
 % This work is licensed under the Creative Commons
 % Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of
@@ -69,7 +75,7 @@ if nargin < 3 || isempty(Operations) || ischar(Operations)
 		fprintf(1,'Importing default set of time-series features\n');
 		theINPfile = 'INP_ops.txt';
 	end
-	Operations = SQL_add('ops',theINPfile,0,0)';
+	Operations = SQL_add('ops',theINPfile,false,false)';
 end
 if isnumeric(Operations)
 	error('Provide an input file or a structure array of Operations');
@@ -77,22 +83,19 @@ end
 
 if nargin < 4 || isempty(MasterOperations)
 	% Use the default library:
-	MasterOperations = SQL_add('mops','INP_mops.txt',0,0)';
-end
-
-% Need to link operations to masters if not already supplied:
-if nargin < 4
+	MasterOperations = SQL_add('mops','INP_mops.txt',false,false)';
+	% Need to link operations to masters if not already supplied:
 	[Operations, MasterOperations] = TS_LinkOperationsWithMasters(Operations,MasterOperations);
 end
 
 % Whether to code up special-valued outputs
 if nargin < 5
-	codeSpecial = 0;
+	codeSpecial = false;
 end
 
 % Whether to give information out to screen
 if nargin < 6
-	beVocal = 1;
+	beVocal = true;
 end
 
 %-------------------------------------------------------------------------------

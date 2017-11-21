@@ -26,13 +26,19 @@ function outputFileName = TS_normalize(normFunction,filterOptions,fileName_HCTSA
 %             keep, from HCTSA.mat).
 
 % ------------------------------------------------------------------------------
-% Copyright (C) 2016, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
+% Copyright (C) 2017, Ben D. Fulcher <ben.d.fulcher@gmail.com>,
 % <http://www.benfulcher.com>
 %
-% If you use this code for your research, please cite:
-% B. D. Fulcher, M. A. Little, N. S. Jones, "Highly comparative time-series
+% If you use this code for your research, please cite the following two papers:
+%
+% (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% DOI: 10.1016/j.cels.2017.10.001
+%
+% (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
 % analysis: the empirical structure of time series and their methods",
-% J. Roy. Soc. Interface 10(83) 20130048 (2013). DOI: 10.1098/rsif.2013.0048
+% J. Roy. Soc. Interface 10(83) 20130048 (2013).
+% DOI: 10.1098/rsif.2013.0048
 %
 % This work is licensed under the Creative Commons
 % Attribution-NonCommercial-ShareAlike 4.0 International License. To view a copy of
@@ -54,6 +60,9 @@ if nargin < 2 || isempty(filterOptions)
     % By default remove less than 70%-good-valued time series, & then less than
     % 100%-good-valued operations.
 end
+if any(filterOptions > 1)
+    error('Set filterOptions as a length-2 vector with elements in the unit interval');
+end
 fprintf(1,['Removing time series with more than %.2f%% special-valued outputs\n' ...
             'Removing operations with more than %.2f%% special-valued outputs\n'], ...
             (1-filterOptions(1))*100,(1-filterOptions(2))*100);
@@ -64,7 +73,7 @@ if nargin < 3 || isempty(fileName_HCTSA)
 end
 
 if nargin < 4
-    classVarFilter = 0; % don't filter on individual class variance > 0 by default
+    classVarFilter = false; % don't filter on individual class variance > 0 by default
 end
 
 if nargin < 5
@@ -83,7 +92,7 @@ load(whatDataFile,'TS_Quality','MasterOperations');
 % First check that fromDatabase exists (for back-compatability)
 fromDatabase = TS_GetFromData(fileName_HCTSA,'fromDatabase');
 if isempty(fromDatabase)
-    fromDatabase = true; % (legacy: set to 1 by default)
+    fromDatabase = true; % (legacy)
 end
 
 % Check that we have the groupNames if already assigned labels
@@ -322,7 +331,8 @@ function keepInd = filterNaNs(XMat,nan_thresh,objectName)
         propNaN = mean(isnan(XMat),2); % proportion of NaNs across rows
         keepInd = (1-propNaN >= nan_thresh);
         if all(~keepInd)
-            error('No %s had more than %4.2f%% good values.',objectName,nan_thresh*100)
+            error('No %s had more than %4.2f%% good values.\nSet a more lenient threshold.',...
+                                objectName,nan_thresh*100)
         end
         if all(keepInd)
             fprintf(1,['All %u %s have greater than %4.2f%% good values.' ...
