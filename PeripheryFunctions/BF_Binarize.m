@@ -8,7 +8,7 @@ function yBin = BF_Binarize(y,binarizeHow)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -38,21 +38,32 @@ if nargin < 2 || isempty(binarizeHow)
 end
 
 %-------------------------------------------------------------------------------
+% function to transform real values to 0 if <=0 and 1 if >0:
+%-------------------------------------------------------------------------------
+
+function Y = stepBinary(X)
+
+    Y = zeros(size(X),'like',X);
+    Y(X > 0) = 1;
+    
+end
+
+%-------------------------------------------------------------------------------
 % Do the binary transformation:
 %-------------------------------------------------------------------------------
 
 switch binarizeHow
     case 'diff'
         % Binary signal: 1 for stepwise increases, 0 for stepwise decreases
-        yBin = ((sign(diff(y)))+1)/2;
+        yBin = stepBinary(diff(y));
 
     case 'mean'
         % Binary signal: 1 for above mean, 0 for below mean
-        yBin = (sign(y - mean(y))+1)/2;
+        yBin = stepBinary(y - mean(y));
 
     case 'median'
         % Binary signal: 1 for above median, 0 for below median
-        yBin = (sign(y - median(y))+1)/2;
+        yBin = stepBinary(y - median(y));
 
     case 'iqr'
         % Binary signal: 1 if inside interquartile range, 0 otherwise

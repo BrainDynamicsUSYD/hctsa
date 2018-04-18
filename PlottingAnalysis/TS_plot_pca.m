@@ -22,7 +22,7 @@ function TS_plot_pca(whatData,showDist,classMeth,annotateParams)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -67,6 +67,7 @@ end
 
 % Load in data:
 [TS_DataMat,TimeSeries,Operations] = TS_LoadData(whatData);
+numFeatures = length(Operations);
 
 % Retrieve group names also:
 groupNames = TS_GetFromData(whatData,'groupNames');
@@ -97,7 +98,7 @@ fprintf(1,'---Done.\n');
 %-------------------------------------------------------------------------------
 % Print out the types of features loading into the two components
 %-------------------------------------------------------------------------------
-numTopLoadFeat = 20; % display this many features loading onto each PC
+numTopLoadFeat = min(numFeatures,20); % display this many features loading onto each PC
 for j = 1:2
     fprintf(1,'---Top feature loadings for PC%u---:\n',j);
     [~,ix] = sort(abs(pcCoeff(:,j)),'descend');

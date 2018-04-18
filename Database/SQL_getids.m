@@ -27,7 +27,7 @@ function ids = SQL_getids(tsOrOps,lengthRange,keywordInclude,keywordRemove,idr)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -315,7 +315,9 @@ else
 		end
 		[op_ids,emsg] = mysql_dbquery(dbc,selectString);
 		if ~isempty(emsg)
-			fprintf(1,'Database call failed\n%s\n',selectString); disp(emsg); keyboard
+			fprintf(1,'Database call failed\n%s\n',selectString);
+			disp(emsg);
+			keyboard
 		else
 			op_ids_keep = unique(vertcat(op_ids{:}));
 		end
@@ -336,7 +338,8 @@ else
 				end
 			end
 		else % an error
-			fprintf(1,'Error retrieving the operations from implicated master functions\n%s',emsg); keyboard
+			fprintf(1,'Error retrieving the operations from implicated master functions\n%s',emsg);
+			keyboard
 		end
 	end
 

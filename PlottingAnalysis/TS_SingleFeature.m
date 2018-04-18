@@ -16,7 +16,7 @@ function TS_SingleFeature(whatData,featID,makeViolin,makeNewFigure,whatStat,beVo
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -141,15 +141,21 @@ end
 % Get cross-validated accuracy for this single feature using a Naive Bayes linear classifier:
 if isempty(whatStat)
     numFolds = 10;
-    accuracy = GiveMeCfn('diaglinear',TS_DataMat(:,op_ind),timeSeriesGroup,...
-                            [],[],numClasses,1,[],[],numFolds);
-    fprintf(1,'%u-fold cross validated balanced accuracy: %.2f +/- %.2f%%\n',...
+    try
+        accuracy = GiveMeCfn('diaglinear',TS_DataMat(:,op_ind),timeSeriesGroup,...
+                            [],[],numClasses,true,[],[],numFolds);
+        fprintf(1,'%u-fold cross validated balanced accuracy: %.2f +/- %.2f%%\n',...
                             numFolds,mean(accuracy),std(accuracy));
-    statText = sprintf('%.1f%%',mean(accuracy));
+        statText = sprintf('%.1f%%',mean(accuracy));
+    catch emsg
+        accuracy = NaN;
+        statText = '--';
+        warning('Error fitting classification model: %s',emsg.message)
+    end
 else
     if isnumeric(whatStat)
         statText = sprintf('%.1f',whatStat);
-    else % assume text otherwise
+    else % otherwise assume text
         statText = whatStat;
     end
 end

@@ -15,7 +15,7 @@ function success = TS_InitiateParallel(doInitiate)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -32,7 +32,7 @@ function success = TS_InitiateParallel(doInitiate)
 
 % Check inputs:
 if nargin < 1
-    doInitiate = 0;
+    doInitiate = false;
 end
 
 % Check a license is available:
@@ -41,10 +41,10 @@ try
 catch
     fprintf(1,['License for Parallel Computing Toolbox could not be initiated' ...
                     ' -- cannot perform computations across multiple cores\n']);
-    success = 0;
+    success = false;
     return
 end
-success = 1;
+success = true;
 
 %-------------------------------------------------------------------------------
 matlabVersion = version('-release');
@@ -64,7 +64,7 @@ try
             fprintf(1,['Matlab parallel processing pool opened with %u ' ...
                                     'workers\n'],numWorkers);
             % Regardless of what you input -- must initiate in this case:
-            doInitiate = 1;
+            doInitiate = true;
         else
             % Get number of workers:
             numWorkers = poolObj.NumWorkers;
@@ -84,7 +84,7 @@ try
     end
 catch emsg
     warning('\nError starting parallel processing pool -- running serially instead:\n%s',emsg.message)
-    success = 0;
+    success = false;
 end
 
 %-------------------------------------------------------------------------------

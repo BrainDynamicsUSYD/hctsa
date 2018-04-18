@@ -19,7 +19,7 @@ function [accuracy,Mdl,whatLoss] = GiveMeCfn(whatClassifier,XTrain,yTrain,XTest,
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -72,7 +72,7 @@ end
 if ~exist('reWeight','var')
     % Reweighted observations by inverse probability weight
     % (for class imbalanced problems)
-    reWeight = 1;
+    reWeight = true;
 end
 if nargin < 10
     CVFolds = 0;
@@ -93,6 +93,9 @@ if numClasses==2
     % Binary model (easier):
     switch whatClassifier
     case 'knn'
+        if beVerbose
+            fprintf(1,'Using three neighbors for knn\n');
+        end
         if CVFolds > 0
             Mdl = fitcknn(XTrain,yTrain,'NumNeighbors',3,'KFold',CVFolds);
         else
@@ -193,8 +196,7 @@ end
 %-------------------------------------------------------------------------------
 % Evaluate performance on test data:
 %-------------------------------------------------------------------------------
-
-% Predict for the test data:
+% Predict the test data:
 if CVFolds == 0
     if isempty(XTest) || isempty(yTest)
         % No need to compute this if you're just after the model
@@ -208,9 +210,16 @@ else
     % Test data is mixed through the training data provided using k-fold cross validation
     % Output is the accuracy/loss measure for each fold, can mean it themselves if they want to
     yPredict = kfoldPredict(Mdl);
-    accuracy = arrayfun(@(x) BF_lossFunction(yTrain(Mdl.Partition.test(x)),...
-                                yPredict(Mdl.Partition.test(x)),whatLoss,numClasses),...
-                                    1:CVFolds);
+    computePerFold = false;
+    if computePerFold
+        % Compute separately for each fold, store in vector accuracy:
+        accuracy = arrayfun(@(x) BF_lossFunction(yTrain(Mdl.Partition.test(x)),...
+                                    yPredict(Mdl.Partition.test(x)),whatLoss,numClasses),...
+                                        1:CVFolds);
+    else
+        % Compute aggregate across all folds:
+        accuracy = BF_lossFunction(yTrain,yPredict,whatLoss,numClasses);
+    end
 end
 
 

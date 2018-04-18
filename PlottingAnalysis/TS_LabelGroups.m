@@ -1,4 +1,4 @@
-function [groupLabels,newFileName] = TS_LabelGroups(keywordGroups,whatData,saveBack,filterMissing)
+function [groupLabels,newFileName] = TS_LabelGroups(whatData,keywordGroups,saveBack,filterMissing)
 % TS_LabelGroups    Label groups of a time series using assigned keywords
 %
 % You provide a set of keyword options to store a specific grouping of time series.
@@ -19,17 +19,17 @@ function [groupLabels,newFileName] = TS_LabelGroups(keywordGroups,whatData,saveB
 % groupIndices = TS_LabelGroups({'disease','healthy'});
 %
 %---INPUTS:
+% whatData: Where to retrive from (and write back to): 'HCTSA.mat' (default),
+%           cf. TS_LoadData.
+%
 % keywordGroups: The keyword groups, a cell of strings, as
 %                   {'keyword_1', 'keyword2',...}
 %                   Can also use an empty label, '', to select unique keywords
 %                   automatically from the dataset.
 %
-% whatData: Where to retrive from (and write back to): 'HCTSA.mat' (default),
-%           cf. TS_LoadData.
+% saveBack: Can set to false to stop saving the grouping back to the input file.
 %
-% saveBack: Can set to 0 to stop saving the grouping back to the input file.
-%
-% filterMissing: Set to 1 to remove data that don't match any keywords.
+% filterMissing: Set to true to remove data that don't match any keywords.
 %
 %---OUTPUTS:
 % groupIndices: the indicies corresponding to each keyword in keywordGroups.
@@ -41,7 +41,7 @@ function [groupLabels,newFileName] = TS_LabelGroups(keywordGroups,whatData,saveB
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -59,7 +59,11 @@ function [groupLabels,newFileName] = TS_LabelGroups(keywordGroups,whatData,saveB
 % ------------------------------------------------------------------------------
 %% Check Inputs:
 % ------------------------------------------------------------------------------
-if nargin < 1
+if nargin < 1 || isempty(whatData)
+    whatData = 'raw';
+    fprintf(1,'Retrieving data from HCTSA.mat by default.\n');
+end
+if nargin < 2
     keywordGroups = {};
     % Try to assign by unique keywords later
 end
@@ -67,18 +71,12 @@ if ~isempty(keywordGroups) && ischar(keywordGroups);
     fprintf(1,'Grouping all items with ''%s''.\n',keywordGroups);
     keywordGroups = {keywordGroups};
 end
-
-if nargin < 2 || isempty(whatData)
-    whatData = 'raw';
-    fprintf(1,'Retrieving data from HCTSA.mat by default.\n');
-end
-
 if nargin < 3 || isempty(saveBack)
-    saveBack = 1; % Saves the grouping back to the HCTSA_*.loc file
+    saveBack = true; % Saves the grouping back to the HCTSA_*.loc file
 end
 
 if nargin < 4
-    filterMissing = 0; % don't filter out data with missing labels -- error if not all data are labeled
+    filterMissing = false; % don't filter out data with missing labels -- error if not all data are labeled
 end
 
 % ------------------------------------------------------------------------------
@@ -124,7 +122,7 @@ fprintf(1,'Group labeling complete in %s.\n',BF_thetime(toc(timer)));
 clear timer % stop timing
 
 %-------------------------------------------------------------------------------
-% Checks:
+%% Checks:
 %-------------------------------------------------------------------------------
 
 % Check each group has some members:
@@ -201,13 +199,10 @@ if saveBack
     % First append/overwrite group names
     groupNames = keywordGroups;
 
-    % Make a cell version of group indices (to use cell2struct)
-    theGroupsCell = cell(size(groupLabels));
+    % Make a cell version of group indices (required to later use cell2struct):
+    groupLabelsCell = num2cell(groupLabels);
 
-    % Cannot find an in-built function for this... :-/
-    for i = 1:length(groupLabels), theGroupsCell{i} = groupLabels(i); end
-
-    % First remove Group field if it exists
+    % First remove 'Group' field if it exists
     if isfield(TimeSeries,'Group')
         TimeSeries = rmfield(TimeSeries,'Group');
     end
@@ -218,7 +213,7 @@ if saveBack
 
     % Then append the new group information:
     % (some weird bug -- squeeze is sometimes needed here...:)
-    TimeSeries = cell2struct([squeeze(struct2cell(TimeSeries));theGroupsCell],newFieldNames);
+    TimeSeries = cell2struct([squeeze(struct2cell(TimeSeries));groupLabelsCell],newFieldNames);
 
     % Save everything back to file:
     save(theFile,'TimeSeries','groupNames','-append')

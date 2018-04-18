@@ -1,4 +1,4 @@
-function TS_FeatureSummary(opID, whatData, doViolin, annotateParams)
+function TS_FeatureSummary(opID,whatData,doViolin,annotateParams)
 % TS_FeatureSummary   How a given feature behaves across a time-series dataset
 %
 % Plots the distribution of outputs of an operation across the given dataset
@@ -17,7 +17,7 @@ function TS_FeatureSummary(opID, whatData, doViolin, annotateParams)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -56,6 +56,10 @@ end
 %-------------------------------------------------------------------------------
 [TS_DataMat,TimeSeries,Operations] = TS_LoadData(whatData);
 theOp = ([Operations.ID]==opID);
+if ~any(theOp)
+    error('No matches for operation ID %u',opID);
+end
+
 dataVector = TS_DataMat(:,theOp); % the outputs of interest
 notNaN = find(~isnan(dataVector));
 dataVector = dataVector(notNaN); % remove bad values

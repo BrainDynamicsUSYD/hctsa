@@ -25,7 +25,7 @@ function TS_SimSearch(varargin)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -74,7 +74,7 @@ addOptional(inputP,'whatPlots',default_whatPlots,check_whatPlots);
 
 % whatPlots
 default_whatDistMetric = '';
-check_whatDistMetric = @ischar;
+check_whatDistMetric = @(x) islogical(x) || (isnumeric(x) && (x==0 || x==1));
 addOptional(inputP,'whatDistMetric',default_whatDistMetric,check_whatDistMetric);
 
 %-------------------------------------------------------------------------------
@@ -93,6 +93,9 @@ tsOrOps = inputP.Results.tsOrOps;
 numNeighbors = inputP.Results.numNeighbors;
 whatDataFile = inputP.Results.whatDataFile;
 whatPlots = inputP.Results.whatPlots;
+if ischar(whatPlots)
+    whatPlots = {whatPlots};
+end
 whatDistMetric = inputP.Results.whatDistMetric;
 clear inputP;
 
@@ -121,7 +124,7 @@ case 'ops'
     % (items are rows)
     TS_DataMat = TS_DataMat';
 end
-keyboard
+
 if isempty(clustStruct)
     % This should be set on normalization -- if missing for some reason, set as default now:
     clustStruct = struct('distanceMetric','none','Dij',[],...
@@ -173,9 +176,9 @@ else
             theType = 'Pearson';
         end
         % Is there a nicer way of computing abs correlations?
-        fprintf(1,'Computing absolute %s correlation distances to %u other features...',theType,numItems-1);
+        fprintf(1,'Computing absolute %s correlation distances to %u other features...',...
+                        theType,numItems-1);
         Dj = zeros(numItems,1);
-        keyboard
         for j = 1:numItems
             Dj(j) = 1 - abs(corr(TS_DataMat(targetInd,:)',TS_DataMat(j,:)','type',theType));
         end
@@ -264,8 +267,9 @@ if any(ismember('matrix',whatPlots))
 
     f = figure('color','w');
 
-    % (I) Time-series annotations
-    if strcmp(tsOrOps,'ts')
+    switch tsOrOps
+    case 'ts'
+        % (I) Time-series annotations
         ax1 = subplot(1,5,1); box('on'); hold on
         ax1.YTick = (1:numNeighbors+1);
         ax1.YTickLabel = labels;
@@ -274,19 +278,19 @@ if any(ismember('matrix',whatPlots))
         ax1.XLim = [1,tsLength];
         xlabel('Time (samples)');
         ax1.TickLabelInterpreter = 'none';
+        NormMinMax = @(x) (x-min(x))/(max(x)-min(x));
         for j = 1:numNeighbors+1
-            tsData = dataStruct(neighborInd(ord(j))).Data(1:tsLength);
+            tsData = dataStruct(neighborInd(ord(j))).Data;
             lengthHere = min(tsLength,length(tsData));
             plot(1:lengthHere,j-0.5+NormMinMax(tsData),'-k');
             if j < numNeighbors+1
                 plot([1,tsLength],(j+0.5)*ones(2,1),':k')
             end
         end
-
         % (II) Pairwise similarity matrix
         ax2 = subplot(1,5,2:5); box('on'); hold on
-    else
-        % (II) Pairwise similarity matrix
+    case 'ops'
+        % Pairwise similarity matrix only
         ax2 = gca; box('on'); hold on
     end
 
@@ -338,7 +342,10 @@ if any(ismember('matrix',whatPlots))
 
     ax2.YLim = [0.5,numNeighbors+1.5];
     ax2.YTick = 1:numNeighbors+1;
-    if strcmp(tsOrOps,'ops')
+    switch tsOrOps
+    case 'ts'
+        ax2.YTickLabel = [];
+    case 'ops'
         ax2.YTickLabel = labels;
         ax2.TickLabelInterpreter = 'none';
         ylabel('Name');
@@ -396,13 +403,8 @@ if any(ismember(whatPlots,'network'))
                     'linkThresh',[0.9,0.8,0.7,0.6],...
                     'nodeLabels',nodeLabels,...
                     'dataLabels',dataLabels,...
-                    'colorMap','set1');
+                    'colorMap','set1',...
+                    'makeFigure',true);
 end
-
-% ------------------------------------------------------------------------------
-% function X = NormMinMax(x)
-%     X = (x-min(x))/(max(x)-min(x));
-% end
-% ------------------------------------------------------------------------------
 
 end

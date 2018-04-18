@@ -24,7 +24,7 @@ function out = CO_TranslateShape(y,shape,d,howToMove)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -139,7 +139,7 @@ if 2*w + 1 >= 10; out.tens = mean(np==10); end
 if 2*w + 1 >= 11; out.elevens = mean(np==11); end
 
 % -----
-% Stationarity in 2,3,4 segments
+% Stationarity of the statistics in 2,3, & 4 segments of the time series
 % -----
 out.statav2_m = SY_SlidingWindow(np,'mean','std',2,1);
 out.statav2_s = SY_SlidingWindow(np,'std','std',2,1);
@@ -149,7 +149,5 @@ out.statav4_m = SY_SlidingWindow(np,'mean','std',4,1);
 out.statav4_s = SY_SlidingWindow(np,'std','std',4,1);
 
 % plot(np)
-
-
 
 end

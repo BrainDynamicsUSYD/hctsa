@@ -1,8 +1,11 @@
-function binMatrix = BF_Binarize(groupLabels,numClasses)
+function binMatrix = BF_Binarize(groupLabels,numClasses,makeLogical)
 % BF_ToBinaryClass Converts a group vector to a binary class coded matrix
 %
 % Columns code observations, rows represent classes
-%---INPUT: groupLabels, a vector of integers coding the class of each observation
+%---INPUTS:
+% groupLabels, a vector of integers coding the class of each observation
+% numClasses, the (integer) number of classes
+% makeLogical, (logical) whether to output a logical or numeric matrix
 %---OUTPUT: binMatrix, a binary matrix coding the groupLabels
 
 % ------------------------------------------------------------------------------
@@ -12,7 +15,7 @@ function binMatrix = BF_Binarize(groupLabels,numClasses)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -38,10 +41,19 @@ function binMatrix = BF_Binarize(groupLabels,numClasses)
 if nargin < 2
     numClasses = max(groupLabels);
 end
+if nargin < 3
+    makeLogical = false;
+end
+
+% Number of observations:
 numObs = length(groupLabels);
 
-% Set binary:
-binMatrix = zeros(numClasses,numObs);
+% Generate the binary matrix:
+if makeLogical
+    binMatrix = false(numClasses,numObs);
+else
+    binMatrix = zeros(numClasses,numObs);
+end
 for i = 1:numClasses
     binMatrix(i,groupLabels==i) = 1;
 end

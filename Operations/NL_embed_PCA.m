@@ -31,7 +31,7 @@ function out = NL_embed_PCA(y,tau,m)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -63,6 +63,8 @@ end
 if nargin < 3 || isempty(m)
     m = 3; % three-dimensional embedding
 end
+doPlot = false;
+%-------------------------------------------------------------------------------
 
 % Embed the signal via time-delay method
 y_embed = BF_embed(y,tau,m,0);
@@ -72,8 +74,6 @@ if isnan(y_embed);
     fprintf(1,'Embedding parameters are not suitable for this time series\n');
     out = NaN; return
 end
-
-doPlot = 0;
 
 % ------------------------------------------------------------------------------
 % Do the pca using Statistics toolbox function, 'princomp'

@@ -11,7 +11,7 @@ function TS_plot_2d(featureData,TimeSeries,featureLabels,groupNames,annotatePara
 %
 % featureLabels, cell of labels for each feature
 %
-% groupNames, cell containing a label for each class of timeseries
+% groupNames, cell containing a label for each class of time series
 %
 % annotateParams, a structure containing all the information about how to annotate
 %           data points. Fields can include:
@@ -24,8 +24,8 @@ function TS_plot_2d(featureData,TimeSeries,featureLabels,groupNames,annotatePara
 %               - theMarkerSize, a custom marker size
 %               - theLineWidth: line width for annotated time series
 %
-% showDistr, if 1 (default), plots marginal density estimates for each variable
-%                   (above and to the right of the plot), otherwise set to 0.
+% showDistr, if true (default), plots marginal density estimates for each variable
+%                   (above and to the right of the plot), otherwise set to false.
 %
 % whatClassifier, can select a classifier to fit to the different classes (e.g.,
 %               'linclass' for a linear classifier).
@@ -37,7 +37,7 @@ function TS_plot_2d(featureData,TimeSeries,featureLabels,groupNames,annotatePara
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -161,30 +161,16 @@ else
     theMarkerSize = 12; % Marker size for '.'
 end
 
+handles = cell(numClasses,1);
 for i = 1:numClasses
-    plot(featureData(groupLabels==i,1),featureData(groupLabels==i,2),...
-                '.','color',groupColors{i},'MarkerSize',theMarkerSize)
+    handles{i} = plot(featureData(groupLabels==i,1),featureData(groupLabels==i,2),...
+                '.','color',groupColors{i},'MarkerSize',theMarkerSize);
 end
 
 % Link axes
 if showDistr
     linkaxes([axMain,axTop],'x');
     linkaxes([axMain,axSide],'y');
-end
-
-% ------------------------------------------------------------------------------
-% Set Legend
-%-------------------------------------------------------------------------------
-if numClasses > 1
-    legendText = cell(numClasses,1);
-    for i = 1:numClasses
-        if ~isempty(groupNames)
-            legendText{i} = sprintf('%s (%u)',groupNames{i},sum(groupLabels==i));
-        else
-            legendText{i} = sprintf('Group %u (%u)',i,sum(groupLabels==i));
-        end
-    end
-    legend(legendText,'interpreter','none');
 end
 
 %-------------------------------------------------------------------------------
@@ -205,7 +191,7 @@ end
 % ------------------------------------------------------------------------------
 %% Do classification and plot a classify boundary?
 % ------------------------------------------------------------------------------
-didClassify = 0;
+didClassify = false;
 if numClasses > 1
     % Compute the in-sample classification rate:
     classRate = zeros(3,1); % classRate1, classRate2, classRateboth
@@ -215,7 +201,7 @@ if numClasses > 1
         classRate(2) = GiveMeCfn(whatClassifier,featureData(:,2),groupLabels,featureData(:,2),groupLabels,numClasses);
         [classRate(3),~,whatLoss] = GiveMeCfn(whatClassifier,featureData,groupLabels,featureData(:,1:2),groupLabels,numClasses);
         % Record that classification was performed successfully:
-        didClassify = 1;
+        didClassify = true;
         fprintf(1,'%s in 2-d space: %.2f%%\n',whatLoss,classRate(3));
     catch emsg
         fprintf(1,'\nLinear classification rates not computed\n(%s)\n',emsg.message);
@@ -250,9 +236,23 @@ if numClasses > 1
             end
         catch emsg
             warning('Error fitting classification model in 2-d space')
-            keyboard
         end
     end
+end
+
+%-------------------------------------------------------------------------------
+% Set Legend
+%-------------------------------------------------------------------------------
+if numClasses > 1
+    legendText = cell(numClasses,1);
+    for i = 1:numClasses
+        if ~isempty(groupNames)
+            legendText{i} = sprintf('%s (%u)',groupNames{i},sum(groupLabels==i));
+        else
+            legendText{i} = sprintf('Group %u (%u)',i,sum(groupLabels==i));
+        end
+    end
+    legend([handles{:}],legendText,'interpreter','none');
 end
 
 %-------------------------------------------------------------------------------

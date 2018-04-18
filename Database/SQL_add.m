@@ -22,7 +22,7 @@ function structArray = SQL_add(addWhat,inputFile,forDatabase,beVocal)
 % If you use this code for your research, please cite the following two papers:
 %
 % (1) B.D. Fulcher and N.S. Jones, "hctsa: A Computational Framework for Automated
-% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems (2017).
+% Time-Series Phenotyping Using Massive Feature Extraction, Cell Systems 5: 527 (2017).
 % DOI: 10.1016/j.cels.2017.10.001
 %
 % (2) B.D. Fulcher, M.A. Little, N.S. Jones, "Highly comparative time-series
@@ -136,11 +136,11 @@ end
 %% Open and read the input file
 % ------------------------------------------------------------------------------
 
-% Determine if it's a .mat file:
+% Determine if input is a .mat file or an input text file based on filename extension:
 if strcmp(inputFile(end-3:end),'.mat');
-    isMatFile = 1;
+    isMatFile = true;
 else
-    isMatFile = 0;
+    isMatFile = false;
 end
 
 if ~isMatFile
@@ -420,13 +420,15 @@ case 'ts' % Prepare toAdd cell for time series
         if length(x) > maxL
             beep
             warning(['\n[%u/%u]%s contains %u samples, this framework can efficiently ' ...
-                        'deal with time series up to %u samples\nSkipping this time series...'],...
-                        j,numItems,TimeSeries(j).Name,TimeSeries(j).Length,maxL)
+                'deal with time series up to %u samples\n',...
+                '[Note that this maximum length can be modified within SQL_add]\n',...
+                'Skipping this time series...'],...
+                j,numItems,TimeSeries(j).Name,TimeSeries(j).Length,maxL)
             continue
         end
 
-        % Passed both tests! Assign wasGood = 1
-        wasGood(j) = 1;
+        % Passed both tests! Assign wasGood = true
+        wasGood(j) = true;
 
         % If storing in a database, need to assign the time-series data as text
         % (which will be stored as singles in the case of a .mat file data)
@@ -480,7 +482,7 @@ case 'ts' % Prepare toAdd cell for time series
     end
 
     % Check that some passed quality checks
-    if sum(wasGood)==0
+    if ~any(wasGood)
         fprintf(1,'None of the %u time series in the input file passed quality checks.\n', ...
                                 length(wasGood));
         return
@@ -493,7 +495,7 @@ case 'ts' % Prepare toAdd cell for time series
         else
             textShow = '';
         end
-        fprintf(1,'\nAll time-series data loaded (%u/%u passed quality tests)%s.\n',...
+        fprintf(1,'\nAll time-series data loaded (%u/%u) passed quality tests%s.\n',...
                         sum(wasGood),length(wasGood),textShow);
         if any(~wasGood)
             input(sprintf('[List %u time series that failed... (press any key)]',sum(~wasGood)),'s');
